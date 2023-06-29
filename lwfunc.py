@@ -20,7 +20,7 @@ import numpy as np
 
 import os
 
-RES=2/83 #Resolution is the actual size divided by the number of pixels equivalent to that size.
+RES = 2 / 83 #Resolution is the actual size divided by the number of pixels equivalent to that size.
 
 def elongation(m):
     x = m['mu20'] + m['mu02']
@@ -94,14 +94,13 @@ def remove_outliers(arr):
     return arr_no_outliers
 
 def lwfunc(fname):
-    print(fname+'.png')
-    img = imread(fname+'.png')
-
-    if os.path.exists(fname+'_SlopeWidth'+'.csv'):
-        os.remove(fname+'_SlopeWidth'+'.csv')
-
-##    cv2.imshow('',img)
-##    cv2.waitKey(0)
+    print(fname + '.png')
+    img = imread(fname + '.png')
+    
+    # The file name as "fname"_SlopeWidthLength.csv will contain the data of the bacteria and their standard deviation of slopes
+    # which is the angles of the tangent to the main body of the bacteria; average width of the bacteria along its curve and the length of that bacteria
+    if os.path.exists(fname + '_SlopeWidthLength' + '.csv'): 
+        os.remove(fname + '_SlopeWidthLength' + '.csv')
 
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))#np.ones((5,5), np.uint8)
 
@@ -314,7 +313,7 @@ def lwfunc(fname):
         mn_width=np.mean(width_)
         length=length+sum(width_)/len(width_)
 
-        with open(fname+'_SlopeWidth'+'.csv', 'a') as f:
+        with open(fname+'_SlopeWidthLength'+'.csv', 'a') as f:
             np.savetxt(f,np.array([i,std_slope,std_theta,mn_width,length]).reshape(1, -1),\
                        delimiter=',',fmt='%.8f')
     ##    text = f"slope={std_slope:.2f},width={mn_width:.2f},length={length:.2f}"
