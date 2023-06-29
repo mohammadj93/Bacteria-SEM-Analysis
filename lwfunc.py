@@ -95,6 +95,8 @@ def remove_outliers(arr):
 
 def lwfunc(fname):
     print(fname + '.png')
+    
+    # Read SEM image which is gone through prediction process by our deep nueral network bacterial detection code based on U-net model.
     img = imread(fname + '.png')
     
     # The file name as "fname"_SlopeWidthLength.csv will contain the data of the bacteria and their standard deviation of slopes
@@ -102,50 +104,14 @@ def lwfunc(fname):
     if os.path.exists(fname + '_SlopeWidthLength' + '.csv'): 
         os.remove(fname + '_SlopeWidthLength' + '.csv')
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))#np.ones((5,5), np.uint8)
-
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+    # Binariz the image
     ret, bw = cv2.threshold(255-img, 160, 255, cv2.THRESH_BINARY)
-    #####################################################
-    ##Nearest neighbor of several particle tracks should be done very
-    ##easily and I will find the code for it.... (Mohammad.)
-    skeleton = skeletonize(bw/255)
 
-##    cv2.imshow('',np.uint8(skeleton*255))
-##    cv2.waitKey(0)
+    # This empty image is needed for the color-coding of the bacteria based on their length or if you change line ... based on any other desired property 
+    color_coded_length=np.zeros(img.shape,np.uint8)
 
-    dst=np.zeros(img.shape,np.uint8)
-    ##
-    ##A=np.nonzero(skeleton*1)
-    ##N=np.shape(skeleton)
-    ##y=A[0]
-    ##x=A[1]
-
-    ##points = np.c_[x, y]
-    ##clf = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(points)
-    ##G = clf.kneighbors_graph()
-    ##T = nx.from_scipy_sparse_array(G)
-    ##order = list(nx.dfs_preorder_nodes(T, 0))
-    ##xx = x[order]
-    ##yy = y[order]
-    ##paths = [list(nx.dfs_preorder_nodes(T, i)) for i in range(len(points))]
-    ##mindist = np.inf
-    ##minidx = 0
-    ##for i in range(len(points)):
-    ##    p = paths[i]           # order of nodes
-    ##    ordered = points[p]    # ordered nodes
-    ##    # find cost of that order by the sum of euclidean distances between points (i) and (i+1)
-    ##    cost = (((ordered[:-1] - ordered[1:])**2).sum(1)).sum()
-    ##    if cost < mindist:
-    ##        mindist = cost
-    ##        minidx = i
-    ##opt_order = paths[minidx]
-    ##xx = x[opt_order]
-    ##yy = y[opt_order]
-    ##plt.plot(xx,N[1]-yy,marker="o")
-    ##plt.show()
-    #####################################################
-
-    # ERODE THE IMAGE FIRST
+    # Erode the image first
     ime = cv2.erode(bw, kernel, iterations=2)
     # BLURE THE ERODED IMAGE AND BINARIZE AGAIN
     bimg = cv2.blur(ime,(10,10)) 
@@ -208,12 +174,11 @@ def lwfunc(fname):
         y=A[0]
         x=A[1]
 
-        ###############################################################
         points = np.c_[x, y]
 
         if np.size(x)<10:
             continue
-        
+        # Nearest neighbor of several particle tracks should be done very easily 
         clf = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(points)
         G = clf.kneighbors_graph()
         T = nx.from_scipy_sparse_array(G)
@@ -329,7 +294,7 @@ def lwfunc(fname):
     ##    cv2.imwrite('ZZZZ'+str(i)+'.png', AAA)
 
     ##    plt.show()
-        dst = cv2.bitwise_or(np.uint8(draw*length/4), dst)
+        color_coded_length = cv2.bitwise_or(np.uint8(draw*length/4), color_coded_length)
         cv2.putText(dst, str(i), (int(xi[0]), int(yi[0])), font, font_scale, color, thickness)
 
     plt.imshow(dst,cmap='jet')
