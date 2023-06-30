@@ -141,7 +141,7 @@ def lwfunc(fname):
         skeleton = skeletonize(draw/255)
         # Take out the nonzero elements that contain the points along the backbone of the bacterium
         Points=np.nonzero(skeleton)
-        N=np.shape(skeleton)
+        N=np.shape(skeleton) # Size of the image
         # Extract the x and y values from the Points array. notice x and y are extracted by indices 1 and 0 respectively because image rows are associated with y
         y=Points[0]
         x=Points[1]
@@ -181,58 +181,49 @@ def lwfunc(fname):
         if np.size(xf)<4:
             continue
         
-        # Smoothing using cubic spline interpolation
-        t = np.arange(len(xf))
+        # Smoothing using cubic spline interpolation with 30 points
+        t = np.arange(len(x_skipped))
         ti = np.linspace(0, t.max(), 30)
-        xi = interp1d(t, xf, kind='cubic')(ti)
-        yi = interp1d(t, yf, kind='cubic')(ti)
+        xi = interp1d(t, x_skipped, kind='cubic')(ti) # Interpolated x
+        yi = interp1d(t, y_skipped, kind='cubic')(ti) # Interpolated y
         
-        
+        # Calculate the slope of line perpendicular to the curve at each point to extract the width of the bacterium
         dy_dx = np.gradient(yi, xi)
         theta=np.arctan(dy_dx)
-        # Calculate the perpendicular slope of the curve at each point
         perp_slope_vec = np.tan(np.pi/2+theta)
-        # perp_slope_vec = -1/dy_dx
+        # Remove any nan hapenning because of 90 degree or pi/2 angles which have slope equal to infinity
         perp_slope_vec = np.nan_to_num(perp_slope_vec, nan=0)
+        # If the slope is higher than 100 or lower than -100 replace it with only 100. This approximation is enough for taking the width accurately
         perp_slope_vec[np.abs(perp_slope_vec)>100]=100
-        
-##        with open('data.txt', 'a') as f:
-##            np.savetxt(f,perp_slope_vec, header='Array'+str(i))
 
-        j=5;
-        plotN=-1
-        if i==plotN:
-            plt.imshow(draw)
-            plt.plot(xi,yi)
-            #print(perp_slope_vec)
-        SLOPE=[]
-        WIDTH=[]
+        SLOPE=[] # To save the slopes along the curve
+        WIDTH=[] # To save the widths along the curve
+        # Ignore the first 5 points in the begining of the curve to account for the effect of edges
+        j=5; # j is the counter for the points along tre curve
         for slope in perp_slope_vec[5:-5]:
-            # Extract the x and y coordinates of the point
+            # Extract the initial x and y coordinates of the point along the curve
             x0, y0 = (xi[j], yi[j])
             # Calculate the y-intercept of the line
             y_intercept = y0 - slope*x0
-
+            # The length of the line perpendicular to the curve should not exceed the image size; LL is to insure the line does not get very large
             LL=20*(1/(1+np.exp(abs(slope)-1))+0.2);
             # Generate the x values over the specified range
             x = np.linspace(xi[j]-LL, xi[j]+LL, 10)
             # Calculate the y values of the line at each x value
             y = slope*x + y_intercept
 
-            box=(1,1,N[1]-1,N[0])
+            box=(1,1,N[1]-1,N[0]) # determine the box based on the image size
             line=(x,y)
             RL=reduce_line_to_box(line,box)
 
-            start=(RL[0][1],RL[0][0])
-            end=(RL[1][1],RL[1][0])
-            if i==plotN:
-                plt.plot([start[1],end[1]],[start[0],end[0]],'r-',lw=0.5)
-            v123=profile_line(draw, start, end)
-    ##        print('width=',find_band_width(v123),',slope=',slope)
-    ##        plt.plot(v123)
+            # Get the width out along the perpendicular line
+            start=(RL[0][1],RL[0][0]) # starting point of the reduced line
+            end=(RL[1][1],RL[1][0])   # end point      of the reduced line
+            IntnsOverLine=profile_line(draw, start, end) # Intensity of the image over the perpendicular line that
+                                                         # crosses the width of the bacteria to extract the width
 
             SLOPE.append(slope)
-            WIDTH.append(find_band_width(v123))
+            WIDTH.append(find_band_width(IntnsOverLine))
             j=j+1;
         #calculate the length
         length = length_of_curve(N[1]-yi, xi)*RES
