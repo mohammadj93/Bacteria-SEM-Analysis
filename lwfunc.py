@@ -115,7 +115,7 @@ def lwfunc(fname):
     bimg = cv2.blur(ime,(10,10)) 
     # Binariz the blured image again
     ret, bw = cv2.threshold(bimg, 160, 255, cv2.THRESH_BINARY)
-    # Dilate the bacteria back to original size
+    # Dilate the bacteria back to increase the size but not so much to merge them back again
     imd = cv2.dilate(bw, kernel, iterations=2)
 
     # find contours of the binarized image
@@ -133,8 +133,7 @@ def lwfunc(fname):
         draw = np.zeros((img.shape[0], img.shape[1]), np.uint8)
         cv2.drawContours(draw, contours, i, (255,0,0), -1)
 
-        # Binariz the draw-since the image is already binarized the cut off is put to zero
-        image = draw>0
+        # Dilate back to original size because now there is no possibility of merging
         draw = cv2.dilate(draw, kernel, iterations=1)
         # Perform skeletonization
         skeleton = skeletonize(draw/255)
