@@ -210,7 +210,7 @@ def lwfunc(fname):
             # Calculate the y values of the line at each x value
             y = slope*x + y_intercept
 
-            box = (1, 1, N[1] - 1, N[0]) # determine the box based on the image size
+            box = (x0 - 30, y0 - 30, x0 + 30, y0 + 30) # determine the box based on the image size
             line = (x,y)
             RL = reduce_line_to_box(line, box)
 
