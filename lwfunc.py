@@ -104,7 +104,7 @@ def lwfunc(fname):
     ret, bw = cv2.threshold(255-img, 160, 255, cv2.THRESH_BINARY)
 
     # This empty image is needed for the color-coding of the bacteria based on their length or if you change line ... based on any other desired property 
-    color_coded_length=np.zeros(img.shape,np.uint8)
+    color_coded_length = np.zeros(img.shape,np.uint8)
 
     # Erode the image first
     ime = cv2.erode(bw, kernel, iterations=2)
@@ -248,7 +248,7 @@ def lwfunc(fname):
         thickness = 1
         cv2.putText(color_coded_length, str(i), (int(xi[0]), int(yi[0])), font, font_scale, color, thickness)
 
-    plt.imshow(dst,cmap = 'jet')
+    plt.imshow(color_coded_length, cmap = 'jet')
     plt.colorbar(plt.cm.ScalarMappable(norm = None, cmap = 'jet'))
 
     plt.savefig(fname + '_LengthColored.svg', format = 'svg', dpi = 1200)
