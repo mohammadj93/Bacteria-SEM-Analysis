@@ -135,6 +135,7 @@ def lwfunc(fname):
 
         # Binariz the draw-since the image is already binarized the cut off is put to zero
         image = draw>0
+        draw = cv2.dilate(draw, kernel, iterations=1)
         # Perform skeletonization
         skeleton = skeletonize(draw/255)
         # Take out the nonzero elements that contain the points along the backbone of the bacterium
