@@ -1,12 +1,9 @@
-from skimage.morphology import skeletonize, skeletonize_3d
-from skimage import data
+from skimage.morphology import skeletonize
 from skimage.io import imread
 import matplotlib.pyplot as plt
-from skimage.util import invert
 
 import numpy as np
-import math 
-from numpy.random import rand
+
 from scipy.interpolate import interp1d
 from sklearn.neighbors import NearestNeighbors
 import networkx as nx
@@ -15,8 +12,6 @@ from skimage.measure import find_contours
 import cv2
 
 from skimage.measure import profile_line
-
-import numpy as np
 
 import os
 
@@ -206,63 +201,52 @@ def lwfunc(fname):
             # Calculate the y-intercept of the line
             y_intercept = y0 - slope*x0
             # The length of the line perpendicular to the curve should not exceed the image size; LL is to insure the line does not get very large
-            LL=20*(1/(1+np.exp(abs(slope)-1))+0.2);
+            LL = 20*(1/(1 + np.exp(abs(slope) - 1)) + 0.2);
             # Generate the x values over the specified range
-            x = np.linspace(xi[j]-LL, xi[j]+LL, 10)
+            x = np.linspace(xi[j] - LL, xi[j] + LL, 10)
             # Calculate the y values of the line at each x value
             y = slope*x + y_intercept
 
-            box=(1,1,N[1]-1,N[0]) # determine the box based on the image size
-            line=(x,y)
-            RL=reduce_line_to_box(line,box)
+            box = (1, 1, N[1] - 1, N[0]) # determine the box based on the image size
+            line = (x,y)
+            RL = reduce_line_to_box(line, box)
 
             # Get the width out along the perpendicular line
-            start=(RL[0][1],RL[0][0]) # starting point of the reduced line
-            end=(RL[1][1],RL[1][0])   # end point      of the reduced line
-            IntnsOverLine=profile_line(draw, start, end) # Intensity of the image over the perpendicular line that
+            start = (RL[0][1], RL[0][0]) # starting point of the reduced line
+            end = (RL[1][1], RL[1][0])   # end point      of the reduced line
+            IntnsOverLine = profile_line(draw, start, end) # Intensity of the image over the perpendicular line that
                                                          # crosses the width of the bacteria to extract the width
 
             SLOPE.append(slope)
             WIDTH.append(find_band_width(IntnsOverLine))
-            j=j+1;
-        #calculate the length
-        length = length_of_curve(N[1]-yi, xi)*RES
+            j = j + 1;
+        
+        # Calculate the length
+        length = length_of_curve(N[1] - yi, xi) * RES
         bact_length.append(length);
+        # Handling the arrays of slopes and widths
+        slope_ = np.array(SLOPE)
+        slope_ = remove_outliers(slope_)
+        width_ = np.array(WIDTH)*RES
+        width_ = remove_outliers(width_)
+        # Take the standard deviation of slopes and average of the width, and the modified length for each bacterium
+        std_slope = np.std(slope_)
+        std_theta = np.std(np.mod(np.abs(theta),np.pi))
+        mn_width = np.mean(width_)
+        length = length + mn_width
 
-        slope_=np.array(SLOPE)
-        slope_=remove_outliers(slope_)
-        width_=np.array(WIDTH)*RES
-        width_=remove_outliers(width_)
+        with open(fname + '_SlopeWidthLength' + '.csv', 'a') as f:
+            np.savetxt(f,np.array([i,std_slope, std_theta, mn_width, length]).reshape(1, -1), \
+                       delimiter = ',', fmt = '%.8f')
 
-        std_slope=np.std(slope_)
-        std_theta=np.std(np.mod(np.abs(theta),np.pi))
-        mn_width=np.mean(width_)
-        length=length+sum(width_)/len(width_)
+        # Create the color-coded image of the bacteria with their length
+        color_coded_length = cv2.bitwise_or(np.uint8(draw * length / 4), color_coded_length)
+        cv2.putText(color_coded_length, str(i), (int(xi[0]), int(yi[0])), font, font_scale, color, thickness)
 
-        with open(fname+'_SlopeWidthLength'+'.csv', 'a') as f:
-            np.savetxt(f,np.array([i,std_slope,std_theta,mn_width,length]).reshape(1, -1),\
-                       delimiter=',',fmt='%.8f')
-    ##    text = f"slope={std_slope:.2f},width={mn_width:.2f},length={length:.2f}"
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.5
-        color = (255, 255, 255)  # BGR color format
-        thickness = 1
-    ##
-    ##    # put the text on the image
-    ##    AAA=cv2.putText(draw, text, (50, 50), font, font_scale, color, thickness)
-    ##
-    ##    # display the image
-    ##    cv2.imwrite('ZZZZ'+str(i)+'.png', AAA)
+    plt.imshow(dst,cmap = 'jet')
+    plt.colorbar(plt.cm.ScalarMappable(norm = None, cmap = 'jet'))
 
-    ##    plt.show()
-        color_coded_length = cv2.bitwise_or(np.uint8(draw*length/4), color_coded_length)
-        cv2.putText(dst, str(i), (int(xi[0]), int(yi[0])), font, font_scale, color, thickness)
-
-    plt.imshow(dst,cmap='jet')
-    plt.colorbar(plt.cm.ScalarMappable(norm=None,cmap='jet'))
-
-    plt.savefig(fname+'_LengthColored.svg',format='svg', dpi=1200)
+    plt.savefig(fname + '_LengthColored.svg', format = 'svg', dpi = 1200)
     plt.clf()
-
 
     cv2.destroyAllWindows()
