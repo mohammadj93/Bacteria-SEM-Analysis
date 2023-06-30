@@ -98,6 +98,9 @@ def lwfunc(fname):
     # which is the angles of the tangent to the main body of the bacteria; average width of the bacteria along its curve and the length of that bacteria
     if os.path.exists(fname + '_SlopeWidthLength' + '.csv'): 
         os.remove(fname + '_SlopeWidthLength' + '.csv')
+    # The header of the file
+    f = open(fname + '_SlopeWidthLength' + '.csv', 'a')
+    f.write('Index,slolpe variation, angle variation, Width, Length\n')
 
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
     # Binariz the image
@@ -255,3 +258,4 @@ def lwfunc(fname):
     plt.clf()
 
     cv2.destroyAllWindows()
+    f.close()
