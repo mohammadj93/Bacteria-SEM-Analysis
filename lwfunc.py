@@ -170,10 +170,10 @@ def lwfunc(fname):
         y_ordered = y[opt_order]
 
         # Skip every 10 elements to reduce the noise comming from the ordered points prior to smoothing the curve
-        x_skipped=x_ordered[[*range(0,x_ordered.shape[0],10)]+[x_ordered.shape[0]-1]] #ignore every 10 element of the array for smoothing it!
-        y_skipped=y_ordered[[*range(0,x_ordered.shape[0],10)]+[x_ordered.shape[0]-1]] #ignore every 10 element of the array for smoothing it!
+        x_skipped = x_ordered[[*range(0,x_ordered.shape[0],10)]+[x_ordered.shape[0]-1]] #ignore every 10 element of the array for smoothing it!
+        y_skipped = y_ordered[[*range(0,x_ordered.shape[0],10)]+[x_ordered.shape[0]-1]] #ignore every 10 element of the array for smoothing it!
         # If the smoothed curve is less than 4 elements is smaller than we could count it as a bacterium
-        if np.size(xf)<4:
+        if np.size(x_skipped)<4:
             continue
         
         # Smoothing using cubic spline interpolation with 30 points
