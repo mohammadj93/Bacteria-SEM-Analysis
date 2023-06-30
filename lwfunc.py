@@ -122,7 +122,7 @@ def lwfunc(fname):
 
     # find contours of the binarized image
     contours, heirarchy = cv2.findContours(imd, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    # LOOP OVER THE CONTOURS
+    # Loop over all the contours
     icounter=0;
     bact_length=[];
 
@@ -145,18 +145,20 @@ def lwfunc(fname):
         # Extract the x and y values from the Points array. notice x and y are extracted by indices 1 and 0 respectively because image rows are associated with y
         y=Points[0]
         x=Points[1]
-
+        
+        # Concatenate the x and y arrays together to run the Nearest Neighbor algorithm
+        # This is to order the indices of the points so that they represent a continuous curve 
         points = np.c_[x, y]
-
+        #get ride of the curves that are smaller than 10 points. This number can be changed based on the resolution of your curve
         if np.size(x)<10:
             continue
-        # Nearest neighbor of several particle tracks should be done very easily 
+        # Nearest Neighbor Algorithm
         clf = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(points)
         G = clf.kneighbors_graph()
         T = nx.from_scipy_sparse_array(G)
         order = list(nx.dfs_preorder_nodes(T, 0))
-        xx = x[order]
-        yy = y[order]
+        x_ordered = x[order]
+        y_ordered = y[order]
         paths = [list(nx.dfs_preorder_nodes(T, i)) for i in range(len(points))]
         mindist = np.inf
         minidx = 0
@@ -169,25 +171,21 @@ def lwfunc(fname):
                 mindist = cost
                 minidx = ic
         opt_order = paths[minidx]
-        xx = x[opt_order]
-        yy = y[opt_order]
+        x_ordered = x[opt_order]
+        y_ordered = y[opt_order]
 
-        xf=xx[[*range(0,xx.shape[0],10)]+[xx.shape[0]-1]] #ignore every ... element of the array for smoothing it!
-        yf=yy[[*range(0,xx.shape[0],10)]+[xx.shape[0]-1]] #ignore every ... element of the array for smoothing it!
-
+        # Skip every 10 elements to reduce the noise comming from the ordered points prior to smoothing the curve
+        x_skipped=x_ordered[[*range(0,x_ordered.shape[0],10)]+[x_ordered.shape[0]-1]] #ignore every 10 element of the array for smoothing it!
+        y_skipped=y_ordered[[*range(0,x_ordered.shape[0],10)]+[x_ordered.shape[0]-1]] #ignore every 10 element of the array for smoothing it!
+        # If the smoothed curve is less than 4 elements is smaller than we could count it as a bacterium
         if np.size(xf)<4:
             continue
         
+        # Smoothing using cubic spline interpolation
         t = np.arange(len(xf))
         ti = np.linspace(0, t.max(), 30)
-        
         xi = interp1d(t, xf, kind='cubic')(ti)
         yi = interp1d(t, yf, kind='cubic')(ti)
-
-    ##    plt.imshow(draw)
-    ##    plt.plot(x,y,'C1',marker = '.',linestyle = 'None')
-    ##    plt.plot(xi,yi,marker = '*')
-    ##    plt.gca().set_aspect('equal', adjustable='box')
         
         
         dy_dx = np.gradient(yi, xi)
