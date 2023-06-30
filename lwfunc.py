@@ -113,17 +113,13 @@ def lwfunc(fname):
 
     # Erode the image first
     ime = cv2.erode(bw, kernel, iterations=2)
-    # BLURE THE ERODED IMAGE AND BINARIZE AGAIN
+    # Blure the eroded image and binerize again:: Neccessary for removing the small nodges between the chuncks 
     bimg = cv2.blur(ime,(10,10)) 
-##    cv2.imshow('blurred image',bimg)
-##    cv2.waitKey(0)
+    # Binariz the blured image again
     ret, bw = cv2.threshold(bimg, 160, 255, cv2.THRESH_BINARY)
-##    cv2.imshow('THRESHOLD BACK',bw)
-##    cv2.waitKey(0)
-    # DILATE BACK TO THE ORIGINAL SIZE
+    # Dilate the bacteria back to original size
     imd = cv2.dilate(bw, kernel, iterations=2)
-##    cv2.imshow('DILATE BACK',imd)
-##    cv2.waitKey(0)
+
     # find contours of the binarized image
     contours, heirarchy = cv2.findContours(imd, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     # LOOP OVER THE CONTOURS
@@ -131,48 +127,24 @@ def lwfunc(fname):
     bact_length=[];
 
     for i in range(len(contours)):
-        # if the aspect raio is not as of that of an sperm then we should rule it out!!!
-        xar,yar,war,har = cv2.boundingRect(contours[i])
-        aspect_ratio = float(max(war,har))/min(har,war)
-        sizear = cv2.contourArea(contours[i])
-    ##    print('size of bacteria',sizear)
-        if sizear < 200 or sizear > 2000:
-    ##        print('we have a small size',aspect_ratio)
+        # If the bacterial size is not as of that of regular bacteria then we should rule it out!!!
+        bact_size = cv2.contourArea(contours[i])
+        if bact_size < 200 or bact_size > 2000:
             continue
-        # for each contour, draw the filled contour
+        # For each bacgterium in the loop, create an image called "draw" that is the filled contour of that bacteriium
         draw = np.zeros((img.shape[0], img.shape[1]), np.uint8)
         cv2.drawContours(draw, contours, i, (255,0,0), -1)
-    ##    cv2.imshow('', draw)
-    ##    cv2.waitKey(2)
-        
-    ##    ime = cv2.erode(draw, kernel, iterations=1)
-    ##    cv2.imshow(' ', ime)
-    ##    cv2.waitKey(0)
 
-    ##    c,tt = cv2.findContours(ime, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    ##    cnt_flag=0
-    ##    max_flag=0
-    ##    for cnt_i in range(len(c)):
-    ##        if cv2.contourArea(c[cnt_i])>max_flag:
-    ##            cnt_flag=cnt_i
-    ##            print('max flag is met: ',cnt_flag)
-                
-    ##    M = cv2.moments(c[cnt_flag])
-    ##    cX = int(M["m10"] / M["m00"])
-    ##    cY = int(M["m01"] / M["m00"])
-    ##    print(cX,cY)
-        
+        # Binariz the draw-since the image is already binarized the cut off is put to zero
         image = draw>0
-        # perform skeletonization
+        # Perform skeletonization
         skeleton = skeletonize(draw/255)
-
-    ##    cv2.imshow('',np.uint8(skeleton*255))
-    ##    cv2.waitKey(20)
-        
-        A=np.nonzero(skeleton*1)
+        # Take out the nonzero elements that contain the points along the backbone of the bacterium
+        Points=np.nonzero(skeleton)
         N=np.shape(skeleton)
-        y=A[0]
-        x=A[1]
+        # Extract the x and y values from the Points array. notice x and y are extracted by indices 1 and 0 respectively because image rows are associated with y
+        y=Points[0]
+        x=Points[1]
 
         points = np.c_[x, y]
 
