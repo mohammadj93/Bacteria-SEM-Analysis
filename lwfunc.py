@@ -127,7 +127,7 @@ def lwfunc(fname):
     for i in range(len(contours)):
         # If the bacterial size is not as of that of regular bacteria then we should rule it out!!!
         bact_size = cv2.contourArea(contours[i])
-        if bact_size < 200 or bact_size > 2000:
+        if bact_size < 200 or bact_size > 10000:
             continue
         # For each bacgterium in the loop, create an image called "draw" that is the filled contour of that bacteriium
         draw = np.zeros((img.shape[0], img.shape[1]), np.uint8)
