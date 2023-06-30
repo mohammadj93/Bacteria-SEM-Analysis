@@ -210,7 +210,7 @@ def lwfunc(fname):
             # Calculate the y values of the line at each x value
             y = slope*x + y_intercept
 
-            box = (x0 - 30, y0 - 30, x0 + 30, y0 + 30) # determine the box based on the image size
+            box = (x0 - 30, y0 - 30, x0 + 30, y0 + 30) # determine the box 60 by 60 pixels around the center point of the bacteria 
             line = (x,y)
             RL = reduce_line_to_box(line, box)
 
