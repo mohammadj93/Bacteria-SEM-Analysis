@@ -241,6 +241,11 @@ def lwfunc(fname):
 
         # Create the color-coded image of the bacteria with their length
         color_coded_length = cv2.bitwise_or(np.uint8(draw * length / 4), color_coded_length)
+        # Put the index of the bacteria in front of it just to identify them
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.5
+        color = (255, 255, 255)  # White color
+        thickness = 1
         cv2.putText(color_coded_length, str(i), (int(xi[0]), int(yi[0])), font, font_scale, color, thickness)
 
     plt.imshow(dst,cmap = 'jet')
